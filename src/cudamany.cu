@@ -14,7 +14,7 @@
 #include <math.h>
 #include <string.h>
 #include <cuda.h>
-#define BLOCKDIM 32
+#define BLOCKDIM 31
 #define SHAREDMEMORYSIZE 65536 // 64 KB in my machine: RTX 2080 info from :https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities
 #define MAXBYTESPERTHREAD SHAREDMEMORYSIZE/(BLOCKDIM*BLOCKDIM)
 #define BYTESPERMOMENT 4 //We are using integers
@@ -70,6 +70,7 @@ void ising( int *G, double *w, int k, int n){
 	for(int rep=0;rep<k;rep++){
 		dim3 dimBlock(BLOCKDIM,BLOCKDIM);
 		dim3 dimGrid(n/(BLOCKDIM*THREADDIM)+1,n/(BLOCKDIM*THREADDIM)+1);
+        //call kernel
 		apply_w<<<dimGrid,dimBlock>>(dev_G,dev_res,dev_w,n);
 		dev_temp=dev_res;
 		dev_res=dev_G;
