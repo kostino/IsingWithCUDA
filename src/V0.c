@@ -43,16 +43,17 @@ void ising( int *G, double *w, int k, int n){
         changes+=(res[x*n+y]!=G[x*n+y]);
     }
   }
-      temp=G;
+     temp=G;
       G=res;
       res=temp;
+     
   
   if(changes==0){
       break;
   }
   }
   if(k%2==1){
-  memcpy(G,res,n*n*sizeof(int));
+   memcpy(res,G,n*n*sizeof(int));
   }
  
 }
@@ -67,11 +68,11 @@ int main(int argc, char* argv[]){
 	fread(buffer,sizeof(buffer),1,ptr); // read 10 bytes to our buffer
 	fclose(ptr);
 
-	ising(buffer,w,11,517);
+	ising(buffer,w,1,517);
 
 	int test[267289];
 
-        ptr = fopen("conf-11.bin","rb");  // r for read, b for binary
+        ptr = fopen("conf-1.bin","rb");  // r for read, b for binary
 
         fread(test,sizeof(test),1,ptr); // read 10 bytes to our buffer
         fclose(ptr);
