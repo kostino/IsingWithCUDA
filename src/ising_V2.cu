@@ -14,19 +14,16 @@
 #include <math.h>
 #include <string.h>
 #include <cuda.h>
-#define BLOCKDIM 31
-#define SHAREDMEMORYSIZE 65536 // 64 KB in my machine: RTX 2080 info from :https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities
-#define MAXBYTESPERTHREAD SHAREDMEMORYSIZE/(BLOCKDIM*BLOCKDIM)
-#define BYTESPERMOMENT 4 //We are using integers
-#define MAXMOMENTSPERTHREAD MAXBYTESPERTHREAD/BYTESPERMOMENT //This is going to be 16 so each thread will be computing a 4x4 grid of moments
-#define THREADDIM (int)sqrt(MAXMOMENTSPERTHREAD)
+#include "ising.h"
+#define BLOCKDIM 16
+#define THREADDIM 6
 
 __global__
 void apply_w(int * data,int * result, double * filter, int n){
 	for(int x=0;x<THREADDIM;x++){
 		for(int y=0;y<THREADDIM;y++){
-			my_x=(blockIdx.x*blockDim.x+threadIdx.x)*THREADDIM+x;
-			my_y=(blockIdx.y*blockDim.y+threadIdx.y)*THREADDIM+y;
+			int my_x=(blockIdx.x*blockDim.x+threadIdx.x)*THREADDIM+x;
+			int my_y=(blockIdx.y*blockDim.y+threadIdx.y)*THREADDIM+y;
 			int my_id=my_x*n+my_y;
 			//If thread is outside of compute id threshhold it doesnt need to do anything
 			if(my_x>=n||my_y>=n){
@@ -70,8 +67,7 @@ void ising( int *G, double *w, int k, int n){
 	for(int rep=0;rep<k;rep++){
 		dim3 dimBlock(BLOCKDIM,BLOCKDIM);
 		dim3 dimGrid(n/(BLOCKDIM*THREADDIM)+1,n/(BLOCKDIM*THREADDIM)+1);
-        //call kernel
-		apply_w<<<dimGrid,dimBlock>>(dev_G,dev_res,dev_w,n);
+		apply_w<<<dimGrid,dimBlock>>>(dev_G,dev_res,dev_w,n);
 		dev_temp=dev_res;
 		dev_res=dev_G;
 		dev_G=dev_temp;
@@ -82,31 +78,4 @@ void ising( int *G, double *w, int k, int n){
 
 
 
-}
-
-int main(int argc, char* argv[]){
-
-	int buffer[267289];
-	FILE *ptr;
-	double w[25]={0.004,0.016,0.026,0.016,0.004,0.016,0.071,0.117,0.071,0.016,0.026,0.117,0,0.117,0.026,0.016,0.071,0.117,0.071,0.016,0.004,0.016,0.026,0.016,0.004};
-	ptr = fopen("conf-init.bin","rb");  // r for read, b for binary
-
-	fread(buffer,sizeof(buffer),1,ptr); // read 10 bytes to our buffer
-	fclose(ptr);
-
-	ising(buffer,w,11,517);
-
-	int test[267289];
-
-        ptr = fopen("conf-11.bin","rb");  // r for read, b for binary
-
-        fread(test,sizeof(test),1,ptr); // read 10 bytes to our buffer
-        fclose(ptr);
-	int a=0;
-	for(int i=0;i<267289;i++){
-		if(test[i]!=buffer[i]){
-			a++;
-		}
-	}
-	printf("Errors=%d\n",a);
 }

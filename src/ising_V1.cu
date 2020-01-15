@@ -14,6 +14,8 @@
 #include <math.h>
 #include <string.h>
 #include <cuda.h>
+#include "ising.h"
+
 #define BLOCKDIM 32
 
 __global__
@@ -62,7 +64,7 @@ void ising( int *G, double *w, int k, int n){
 	for(int rep=0;rep<k;rep++){
 		dim3 dimBlock(BLOCKDIM,BLOCKDIM);
 		dim3 dimGrid(n/BLOCKDIM+1,n/BLOCKDIM+1);
-		apply_w<<<dimGrid,dimBlock>>(dev_G,dev_res,dev_w,n);
+		apply_w<<<dimGrid,dimBlock>>>(dev_G,dev_res,dev_w,n);
 		dev_temp=dev_res;
 		dev_res=dev_G;
 		dev_G=dev_temp;
@@ -73,31 +75,4 @@ void ising( int *G, double *w, int k, int n){
 
 
 
-}
-
-int main(int argc, char* argv[]){
-
-	int buffer[267289];
-	FILE *ptr;
-	double w[25]={0.004,0.016,0.026,0.016,0.004,0.016,0.071,0.117,0.071,0.016,0.026,0.117,0,0.117,0.026,0.016,0.071,0.117,0.071,0.016,0.004,0.016,0.026,0.016,0.004};
-	ptr = fopen("conf-init.bin","rb");  // r for read, b for binary
-
-	fread(buffer,sizeof(buffer),1,ptr); // read 10 bytes to our buffer
-	fclose(ptr);
-
-	ising(buffer,w,11,517);
-
-	int test[267289];
-
-        ptr = fopen("conf-11.bin","rb");  // r for read, b for binary
-
-        fread(test,sizeof(test),1,ptr); // read 10 bytes to our buffer
-        fclose(ptr);
-	int a=0;
-	for(int i=0;i<267289;i++){
-		if(test[i]!=buffer[i]){
-			a++;
-		}
-	}
-	printf("Errors=%d\n",a);
 }
